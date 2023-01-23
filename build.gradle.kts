@@ -15,6 +15,7 @@ group = project.properties["group"]!!
 val kotlinVersion = project.properties["kotlinVersion"]
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         url = uri("https://packages.confluent.io/maven")

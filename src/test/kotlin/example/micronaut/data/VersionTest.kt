@@ -16,7 +16,7 @@ import java.sql.Connection
 import java.util.UUID
 
 @Testcontainers
-@MicronautTest(transactional = true)
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VersionTest {
 
@@ -45,6 +45,7 @@ class VersionTest {
             CREATE TABLE IF NOT EXISTS entity1
             (
                 id                  UUID        NOT NULL,
+                name                varchar     NULL,
                 entity2_id          UUID        NOT NULL,
                 created_at          timestamptz NOT NULL,
                 updated_at          timestamptz NOT NULL,
@@ -58,6 +59,7 @@ class VersionTest {
             CREATE TABLE IF NOT EXISTS entity2
             (
                 id                  UUID        NOT NULL,
+                name                varchar     NULL,
                 created_at          timestamptz NOT NULL,
                 updated_at          timestamptz NOT NULL,
                 version             BIGINT      NOT NULL,
@@ -68,22 +70,35 @@ class VersionTest {
 
     @Test
     fun `entity2 should check version, when update entity1`() {
-        var v = entity2Repository.save(
-            Entity2(
-                id = UUID.randomUUID()
+        val a = transactionManager.execute(TransactionDefinition.DEFAULT) {
+            var v = entity2Repository.save(
+                Entity2(
+                    id = UUID.randomUUID()
+                )
             )
-        )
-        val a = entity1Repository.save(
-            Entity1(
-                id = UUID.randomUUID(),
-                entity2 = v!!
+            entity1Repository.save(
+                Entity1(
+                    id = UUID.randomUUID(),
+                    entity2 = v!!
+                )
             )
-        )
-        var b = entity1Repository.findById(a.id)
-        entity2Repository.update(v!!.copy())
+        }
+        transactionManager.execute(TransactionDefinition.DEFAULT) {
+            var b = entity1Repository.findById(a.id)
+            // entity2Repository.update(v!!.copy())
 
-        println("b.version is ${b!!.version}")
-        val bb = entity1Repository.update(b!!.copy())
-        println(bb.toString())
+            println("update1 entity1.version is ${b!!.version}, entity2.version is ${b!!.entity2.version}")
+            entity1Repository.update(b!!.id, b!!.version!!, "hello")
+            b = entity1Repository.findById(a.id)
+            println("update1 entity1.version is ${b!!.version}, entity2.version is ${b!!.entity2.version}")
+
+            val bbbb = entity1Repository.findById(a.id)
+            println("final entity1.version is ${bbbb!!.version}, entity2.version is ${bbbb!!.entity2!!.version}, name is ${bbbb!!.name}")
+        }
+
+        transactionManager.execute(TransactionDefinition.DEFAULT) {
+            val bbbb = entity1Repository.findById(a.id)
+            println("final entity1.version is ${bbbb!!.version}, entity2.version is ${bbbb!!.entity2!!.version}, name is ${bbbb!!.name}")
+        }
     }
 }

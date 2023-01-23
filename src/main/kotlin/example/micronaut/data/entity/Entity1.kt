@@ -15,6 +15,8 @@ import java.util.UUID
 data class Entity1(
     @field:Id val id: UUID,
 
+    val name: String? = null,
+
     @Relation(Relation.Kind.MANY_TO_ONE, cascade = [Cascade.ALL])
     val entity2: Entity2,
 

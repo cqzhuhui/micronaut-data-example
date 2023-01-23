@@ -13,6 +13,8 @@ import java.util.UUID
 data class Entity2(
     @field:Id val id: UUID,
 
+    val name: String? = null,
+
     // Metadata
     @DateCreated(truncatedTo = ChronoUnit.MILLIS) val createdAt: Instant? = null,
     @DateUpdated(truncatedTo = ChronoUnit.MILLIS) val updatedAt: Instant? = null,
